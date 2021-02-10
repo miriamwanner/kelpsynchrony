@@ -1,0 +1,41 @@
+﻿From Max, 2020 07 29:
+Hi Lawrence, Jon, and Dan,
+
+Tom has been hard at work updating the kelp and environmental data for our synchrony analyses. These new data, attached, run through the end of 2019 and should be “final”. Please note that there may be some minor differences in PDO, nitrate, and kelp based on updated data processing protocols and such. If you have any questions, please let us (or Tom) know.
+
+Can you please give us an update when you have a sense for how long the new analyses might take (recognizing that you are juggling this work with other responsibilities)?
+
+Thanks very much,
+Max
+ 
+Max Castorani | Assistant Professor | Dept. of Environmental Sciences | University of Virginia | castorani@virginia.edu | Tel: 434-243-4949 | Office: 352 Clark Hall | https://castorani.evsc.virginia.edu
+ 
+
+
+From Tom 2020 07 29:
+Hi All,
+
+I estimated the seawater nitrate a bit differently following methods we developed in Snyder et al. 2020. The nitrate concentrations agree well with the estimates from mooring data at kelp forests sites in the SBC.
+
+The kelp dynamics are estimated from the new 2019 dataset. This dataset is subtly different from the 2017/2018 dataset, but should be similar. Let me know if anything looks way off.
+
+The old PDO index is different from the one we used in the past (UW PDO, which has not been updated since mid-2018):
+http://research.jisao.washington.edu/pdo/#:~:text=Data%20The%20Pacific%20Decadal%20Oscillation,ftp%20directory%20(linked%20here).
+
+I used the PDO index from the Tokyo climate center:
+https://ds.data.jma.go.jp/tcc/tcc/products/elnino/decadal/pdo_month.html
+
+We can also substitute the PDO from NOAA here:
+https://www.ncdc.noaa.gov/teleconnections/pdo/
+
+I have plotted the three versions in the attached file.
+
+Tom Bell
+Earth Research Institute
+UC Santa Barbara
+tomwbell.net
+
+
+
+
+

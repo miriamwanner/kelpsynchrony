@@ -1,0 +1,21 @@
+﻿Hi All,
+
+I have attached the new kelp data. 
+
+Kelp_Bio is the summed biomass for each site in wet kg.
+Kelp_Area is the summed area continuing kelp canopy in m2.
+Kelp_Dens is the mean biomass across all pixels containing kelp canopy in kg/m2.
+
+There are also Paddle versions of each, with the sites organized if you were to paddle down the coast from N to S. The paddle site coords are also included, and the third column shows the location of the site vs. the original site list.
+
+I have not filled in any NaNs in any of these datasets.
+
+Please let me know if you have any questions!
+
+
+Tom Bell
+Earth Research Institute
+UC Santa Barbara
+tomwbell.net
+
+

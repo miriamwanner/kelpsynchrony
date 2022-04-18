@@ -28,7 +28,7 @@ library(rgl)
 library(gtools)
 library(ncf)
 library(ggplot2)
-library(mms)
+# library(mms)
 
 library(dplyr)
 library(tidyr)
@@ -38,30 +38,11 @@ library(rgdal)
 library(maptools)
 library(ggsn)
 library(patchwork)
-
+library(sf)
 
 # ========================== 8 models with MRM ==========================
 
 # USE MRM TO SEE CORRELATION BETWEEN SYNCHRONY AND SYMMETRIC PROBABILITY MATRIX:
-
-
-MRM(as.dist(sm) ~ as.dist(logSym) + as.dist(newDistMat) + as.dist(smNO3))
-MRM(as.dist(sm) ~ as.dist(logSym))
-
-MRM(as.dist(sm) ~ as.dist(symProbMatF) + as.dist(newDistMat) + as.dist(smWaves) + as.dist(smNO3))
-
-MRM(as.dist(sm) ~ as.dist(logSym) + as.dist(newDistMat))
-MRM(as.dist(sm) ~ as.dist(logSym) + as.dist(smNO3))
-
-MRM(as.dist(sm) ~ as.dist(symProbMatF) + as.dist(smNO3))
-
-
-MRM(as.dist(sm) ~ as.dist(newDistMat) + as.dist(logSym))
-MRM(as.dist(sm) ~ as.dist(logSym))
-MRM(as.dist(sm) ~ as.dist(newDistMat))
-
-
-
 
 # logit transform
 diag(sm) <- NA
@@ -72,33 +53,45 @@ diag(sm) <- 1
 # logit_max = max(vector_logit_sm)
 # diag(logit_sm) <- logit_max
 
+source("altered_mrm_function.R")
+
 # linear - transport: symProbMat, connectivity: symProbMatF
 # log - transport: logSymProbMat, connectivity: logSym
 # logit: logit_sm, not logit: sm
 
-MRM(as.dist(sm) ~ as.dist(symProbMat) + as.dist(newDistMat) + as.dist(smWaves) + as.dist(smNO3))
-
-source("altered_mrm_function.R")
-# anytime i call MRM, also call my_mrm and make sure the results are the same
+# transport, linear, logit
+my_mrm(as.dist(logit_sm) ~ as.dist(symProbMat) + as.dist(newDistMat) + as.dist(smWaves) + as.dist(smNO3))
+# transport, linear, not logit
 my_mrm(as.dist(sm) ~ as.dist(symProbMat) + as.dist(newDistMat) + as.dist(smWaves) + as.dist(smNO3))
-
-
-
-
+# transport, log, logit
+MRM(as.dist(logit_sm) ~ as.dist(logSymProbMat) + as.dist(newDistMat) + as.dist(smWaves) + as.dist(smNO3))
+# transport, log, not logit
+MRM(as.dist(sm) ~ as.dist(logSymProbMat) + as.dist(newDistMat) + as.dist(smWaves) + as.dist(smNO3))
+# connectivity, linear, logit
+MRM(as.dist(logit_sm) ~ as.dist(symProbMatF) + as.dist(newDistMat) + as.dist(smWaves) + as.dist(smNO3))
+# connectivity, linear, not logit
+MRM(as.dist(sm) ~ as.dist(symProbMatF) + as.dist(newDistMat) + as.dist(smWaves) + as.dist(smNO3))
+# connectivity, log, logit
+MRM(as.dist(logit_sm) ~ as.dist(logSym) + as.dist(newDistMat) + as.dist(smWaves) + as.dist(smNO3))
+# connectivity, log, not logit
+MRM(as.dist(sm) ~ as.dist(logSym) + as.dist(newDistMat) + as.dist(smWaves) + as.dist(smNO3))
 
 # ========================== Spline Correlogram ==========================
 
 
 # spline correlogram
+source("altered_spline_plot_func.R")
 
-
+pdf(file=paste0(resloc, "spline_correlogram.pdf"), width=5, height=4)
 spline_corr = Sncf(newLonLatROMS[,1], newLonLatROMS[,2], kelpDataROMSSites, latlon = TRUE)
 synch_vec <- sm[upper.tri(sm, diag=FALSE)]
 dist_vec <- newDistMat[upper.tri(newDistMat, diag=FALSE)]
 smoothingSpline = smooth.spline(spline_corr$real$predicted$x, spline_corr$real$predicted$y, spar=0.35)
-plot(spline_corr, ylim=c(-0.25, 1), cex.lab=1.5, cex.axis=1.5, cex.sub=1.5)
+# plot(spline_corr, ylim=c(-0.25, 1), cex.lab=1.5, cex.axis=1.5, cex.sub=1.5)
+my_spline_plot(spline_corr, ylim=c(-0.25, 1), cex.lab=1.5, cex.axis=1.5, cex.sub=1.5)
 points(dist_vec, synch_vec, pch=20, cex=0.2, col="lightgrey")
 lines(smoothingSpline)
+dev.off()
 # points(spline_corr$real$predicted$x, spline_corr$real$predicted$y, pch=20, cex=0.2)
 # spline_corr$boot$boot.summary$predicted has different rows
 
@@ -115,6 +108,108 @@ matcol <- ncol(cleanKelp)
 kelpClust <- clust(dat=cleanKelp,times=1:matcol,coords=coords,method="pearson")
 cluster_numbers <- get_clusters(kelpClust)[[3]]
 plotmap(kelpClust)
+
+
+# wavelet mean fields
+# kelpClust <- addwmfs(kelpClust)
+# pdf(file=paste0(resloc, "wmf1.pdf"), width=5, height=4)
+# plotmag(get_wmfs(kelpClust)[[3]][[1]]) # I do not understand the indexing here but I just copied it from the vignette
+# dev.off()
+# pdf(file=paste0(resloc, "wmf2.pdf"), width=5, height=4)
+# plotmag(get_wmfs(kelpClust)[[3]][[2]])
+# dev.off()
+# pdf(file=paste0(resloc, "wmf3.pdf"), width=5, height=4)
+# plotmag(get_wmfs(kelpClust)[[3]][[3]])
+# dev.off()
+
+
+# setup for averages for each cluster
+clusterNorth <- which(cluster_numbers == 1)
+clusterCentral <- which(cluster_numbers == 2)
+clusterSouth <- which(cluster_numbers == 3)
+
+# average time series
+northKelpDataROMSSites <- kelpDataROMSSites[-c(clusterCentral, clusterSouth),]
+centralKelpDataROMSSites <- kelpDataROMSSites[-c(clusterNorth, clusterSouth),]
+southKelpDataROMSSites <- kelpDataROMSSites[-c(clusterNorth, clusterCentral),]
+
+northKelpAvg <- colMeans(northKelpDataROMSSites)
+centralKelpAvg <- colMeans(centralKelpDataROMSSites)
+southKelpAvg <- colMeans(southKelpDataROMSSites)
+
+x1 <- 1:length(northKelpAvg)
+pdf(file=paste0(resloc, "avgClust1.pdf"), width=6, height=3)
+plot(x1, northKelpAvg, xlim=range(x1), ylim=range(northKelpAvg), xlab="Time", ylab="Kelp Biomass",
+     main="Northerly Cluster", pch=16)
+lines(x1[order(x1)], northKelpAvg[order(x1)], xlim=range(x1), ylim=range(northKelpAvg), pch=16)
+dev.off()
+
+x2 <- 1:length(centralKelpAvg)
+pdf(file=paste0(resloc, "avgClust2.pdf"), width=6, height=3)
+plot(x2, centralKelpAvg, xlim=range(x2), ylim=range(centralKelpAvg), xlab="Time", ylab="Kelp Biomass",
+     main="Central Cluster", pch=16)
+lines(x2[order(x2)], centralKelpAvg[order(x2)], xlim=range(x2), ylim=range(centralKelpAvg), pch=16)
+dev.off()
+
+x3 <- 1:length(southKelpAvg)
+pdf(file=paste0(resloc, "avgClust3.pdf"), width=6, height=3)
+plot(x3, southKelpAvg, xlim=range(x3), ylim=range(southKelpAvg), xlab="Time", ylab="Kelp Biomass",
+     main="Southerly Cluster", pch=16)
+lines(x3[order(x3)], southKelpAvg[order(x3)], xlim=range(x3), ylim=range(southKelpAvg), pch=16)
+dev.off()
+
+
+# average time series of cleaned data
+northKelpDataROMSClean <- cleanKelp[-c(clusterCentral, clusterSouth),]
+centralKelpDataROMSClean <- cleanKelp[-c(clusterNorth, clusterSouth),]
+southKelpDataROMSClean <- cleanKelp[-c(clusterNorth, clusterCentral),]
+
+northKelpAvgClean <- colMeans(northKelpDataROMSClean)
+centralKelpAvgClean <- colMeans(centralKelpDataROMSClean)
+southKelpAvgClean <- colMeans(southKelpDataROMSClean)
+
+x1 <- 1:length(northKelpAvgClean)
+pdf(file=paste0(resloc, "avgClustClean1.pdf"), width=6, height=3)
+plot(x1, northKelpAvgClean, xlim=range(x1), ylim=range(northKelpAvgClean), xlab="Time", ylab="Kelp Biomass",
+     main="Northerly Cluster", pch=16)
+lines(x1[order(x1)], northKelpAvgClean[order(x1)], xlim=range(x1), ylim=range(northKelpAvgClean), pch=16)
+dev.off()
+
+x2 <- 1:length(centralKelpAvgClean)
+pdf(file=paste0(resloc, "avgClustClean2.pdf"), width=6, height=3)
+plot(x2, centralKelpAvgClean, xlim=range(x2), ylim=range(centralKelpAvgClean), xlab="Time", ylab="Kelp Biomass",
+     main="Central Cluster", pch=16)
+lines(x2[order(x2)], centralKelpAvgClean[order(x2)], xlim=range(x2), ylim=range(centralKelpAvgClean), pch=16)
+dev.off()
+
+x3 <- 1:length(southKelpAvgClean)
+pdf(file=paste0(resloc, "avgClustClean3.pdf"), width=6, height=3)
+plot(x3, southKelpAvgClean, xlim=range(x3), ylim=range(southKelpAvgClean), xlab="Time", ylab="Kelp Biomass",
+     main="Southerly Cluster", pch=16)
+lines(x3[order(x3)], southKelpAvgClean[order(x3)], xlim=range(x3), ylim=range(southKelpAvgClean), pch=16)
+dev.off()
+
+# finding the average wave height of each cluster
+northWaves <- wavesROMSSites[-c(clusterCentral, clusterSouth),]
+centralWaves <- wavesROMSSites[-c(clusterNorth, clusterSouth),]
+southWaves <- wavesROMSSites[-c(clusterNorth, clusterCentral),]
+
+northWavesMean <- mean(as.matrix(northWaves))
+centralWavesMean <- mean(as.matrix(centralWaves))
+southWavesMean <- mean(as.matrix(southWaves))
+
+# finding the average nitrate value
+northNO3 <- NO3ROMSSites[-c(clusterCentral, clusterSouth),]
+centralNO3 <- NO3ROMSSites[-c(clusterNorth, clusterSouth),]
+southNO3 <- NO3ROMSSites[-c(clusterNorth, clusterCentral),]
+
+northNO3Mean <- mean(as.matrix(northNO3))
+centralNO3Mean <- mean(as.matrix(centralNO3))
+southNO3Mean <- mean(as.matrix(southNO3))
+
+# find the average transport?
+# find the average connectivity?
+# find the average distance?
 
 # code sent from max
 # ---------------------------------------------------------------------------------------------------
@@ -194,7 +289,7 @@ base.map <-
   ggsn::scalebar(x.min = long.0, x.max = long.1, y.min = lat.0, y.max = lat.1,  
                  transform = TRUE, model = 'WGS84',
                  location = "bottomleft", dist = 50, dist_unit = "km",
-                 st.bottom = FALSE, height=0.02, st.dist = 0.035, st.size = 6,
+                 st.bottom = FALSE, height=0.02, st.dist = 0.035, st.size = 4,
                  st.color = 'black', box.fill = 'black', box.color = 'transparent') +
   scale_x_continuous(breaks=rev(seq(floor(long.0), ceiling(long.1), by = 1)), 
                      labels= -1 * rev(seq(floor(long.0), ceiling(long.1), by = 1))) +
@@ -203,7 +298,7 @@ base.map <-
   xlab(expression(paste(Longitude," (",degree,W,")", sep=""))) +
   ylab(expression(paste(Latitude," (",degree,N,")", sep=""))) +
   annotate(geom = 'text', x = -119.75, y = 32.9, label = 'Pacific Ocean', size = 6) +
-  annotate(geom = 'text', x = -119.25, y = 34.6, label = 'California, USA', size = 6)+
+  annotate(geom = 'text', x = -117.7, y = 34.6, label = 'California, USA', size = 6)+
   theme_bw() +
   theme(panel.background = element_rect(fill = "lightblue1"),
         panel.grid = element_blank(),
@@ -236,9 +331,11 @@ roms.map <- base.map +
     panel.background = element_blank()) + 
   theme(legend.key = element_blank(), legend.background=element_blank()) +
   theme(legend.title = element_text(size=18)) +
-  theme(axis.ticks = element_line(size=1)) +
+  theme(axis.ticks = element_line(size=1, color="black")) +
   theme(axis.ticks.length = unit(0.25, "cm")) +
   theme(axis.ticks.margin = unit(0.25, "cm")) +
+  theme(axis.text.x = element_text(color="black")) +
+  theme(axis.text.y = element_text(color="black")) +
   theme(plot.title = element_text(size=25)) +
   theme(text = element_text(size=22)) +
   xlab(expression(paste(Longitude," (",degree,W,")", sep=""))) +  
@@ -250,17 +347,17 @@ roms.map
 
 # getting the different colors of clusters
 roms.pairs.list.subset$Region <- rep(NA, 43)
-roms.pairs.list.subset$Region[which(cluster_numbers == 1)] <- c(rep("Cluster 1", length(which(cluster_numbers == 1))))
-roms.pairs.list.subset$Region[which(cluster_numbers == 2)] <- c(rep("Cluster 2", length(which(cluster_numbers == 2))))
-roms.pairs.list.subset$Region[which(cluster_numbers == 3)] <- c(rep("Cluster 3", length(which(cluster_numbers == 3))))
+roms.pairs.list.subset$Region[which(cluster_numbers == 1)] <- c(rep("Northerly", length(which(cluster_numbers == 1))))
+roms.pairs.list.subset$Region[which(cluster_numbers == 2)] <- c(rep("Central", length(which(cluster_numbers == 2))))
+roms.pairs.list.subset$Region[which(cluster_numbers == 3)] <- c(rep("Southerly", length(which(cluster_numbers == 3))))
 # roms.pairs.list.subset$i.roms.lat <- newLonLatROMS[,2]
 # roms.pairs.list.subset$i.roms.long <- newLonLatROMS[,1]
 
-
+pdf(file=paste0(resloc, "clustering_map.pdf"), width=7, height=5)
 roms.map <- base.map + 
-  geom_point(data=roms.pairs.list.subset, aes(x=i.roms.long, y=i.roms.lat, fill=Region), size=9, shape=21, alpha=0.5) +
-  geom_point(data=roms.pairs.list.subset, aes(x=i.roms.long, y=i.roms.lat), size=1, color="black") +
-  geom_point(data=kelpCoordinates, aes(x=Lon, y=Lat), size=0.5, color="grey") +
+  geom_point(data=roms.pairs.list.subset, aes(x=i.roms.long, y=i.roms.lat, fill=Region, color=Region), size=2.2, shape=21) + # , alpha=0.5) +
+  # geom_point(data=roms.pairs.list.subset, aes(x=i.roms.long, y=i.roms.lat), size=1, color="black") +
+  # geom_point(data=kelpCoordinates, aes(x=Lon, y=Lat), size=0.5, color="grey") +
   theme_bw() + theme(# Set custom formatting
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
@@ -268,9 +365,11 @@ roms.map <- base.map +
     panel.background = element_blank()) + 
   theme(legend.key = element_blank(), legend.background=element_blank()) +
   theme(legend.title = element_text(size=18)) +
-  theme(axis.ticks = element_line(size=1)) +
+  theme(axis.ticks = element_line(size=1, color="black")) +
   theme(axis.ticks.length = unit(0.25, "cm")) +
   theme(axis.ticks.margin = unit(0.25, "cm")) +
+  theme(axis.text.x = element_text(color="black")) +
+  theme(axis.text.y = element_text(color="black")) +
   theme(plot.title = element_text(size=25)) +
   theme(text = element_text(size=22)) +
   xlab(expression(paste(Longitude," (",degree,W,")", sep=""))) +  
@@ -278,28 +377,47 @@ roms.map <- base.map +
   theme(axis.title.x=element_text(vjust=-0.7)) +  
   theme(axis.title.y=element_text(vjust=1.2))
 roms.map
-
+dev.off()
 
 
 # ========================== Colorful predictor matrices ==========================
 
 
-# making mulitpanel plots
-par(mfrow=c(3,2), mai = c(0.3, 0.3, 0.3, 0.3))
+
+# pdf(file=paste0(resloc, "matrices_figure.pdf"), width=7, height=10)
+# par(mfrow=c(3,2), mai = c(0.4, 0.4, 0.3, 0.3), oma=c(1.5, 1.5, 0, 0))
+# n <- 100
+# fields::image.plot(1:ncol(sm),1:ncol(sm),sm,col=hcl.colors(n, palette="viridis"),xlab="",ylab="",main="(a) Kelp Biomass (units)",cex.lab=1.5, cex.axis=1.5, cex.sub=1.5)
+# fields::image.plot(1:ncol(smWaves),1:ncol(smWaves),smWaves,col=hcl.colors(n, palette="viridis"),xlab="",ylab="",main="(b) Waves (units)",cex.lab=1.5, cex.axis=1.5, cex.sub=1.5) # axes say "1:ncol(sm)" (change)
+# fields::image.plot(1:ncol(smNO3),1:ncol(smNO3),smNO3,col=hcl.colors(n, palette="viridis"),xlab="",ylab="",main="(c) Nitrate (units)",cex.lab=1.5, cex.axis=1.5, cex.sub=1.5) # axes say "1:ncol(sm)" (change)
+# fields::image.plot(1:ncol(newDistMat),1:ncol(newDistMat),newDistMat,col=hcl.colors(n, palette="viridis"),xlab="",ylab="",main="(d) Distance (km)",cex.lab=1.5, cex.axis=1.5, cex.sub=1.5)
+# diag(logSymProbMat) <- 0
+# fields::image.plot(1:ncol(logSymProbMat),1:ncol(logSymProbMat),logSymProbMat,col=hcl.colors(n, palette="viridis"),xlab="",ylab="",main="(e) Transport (units)",cex.lab=1.5, cex.axis=1.5, cex.sub=1.5)
+# fields::image.plot(1:ncol(logSym),1:ncol(logSym),logSym,col=hcl.colors(n, palette="viridis"),xlab="",ylab="",main="(f) Connectivity (units)",cex.lab=1.5, cex.axis=1.5, cex.sub=1.5)
+# mtext(outer=TRUE, "Site Index", side=1)
+# mtext(outer=TRUE, "Site Index", side=2)
+# dev.off()
+
+pdf(file=paste0(resloc, "matrices_figure.pdf"), width=7, height=4.2)
+par(mfrow=c(2, 3), mai = c(0.4, 0.4, 0.4, 0.7), oma=c(1.5, 1.5, 0, 0))
 # layout(matrix(c(1,2,3,4,5,5), 3, 2, byrow = TRUE))
+n <- 100
 # colorful matrix of sm
-fields::image.plot(1:ncol(sm),1:ncol(sm),sm,col=heat.colors(20),xlab="Sites",ylab="Sites",cex.lab=1.5, cex.axis=1.5, cex.sub=1.5)
+fields::image.plot(1:ncol(sm),1:ncol(sm),sm,col=hcl.colors(n, palette="viridis"),xlab="",ylab="",main="(a) Kelp Synchrony",cex.lab=1.5, cex.axis=1.5, cex.sub=1.5)
 # colorful matrix of smWaves
-fields::image.plot(1:ncol(smWaves),1:ncol(smWaves),smWaves,col=heat.colors(20),xlab="Sites",ylab="Sites",cex.lab=1.5, cex.axis=1.5, cex.sub=1.5) # axes say "1:ncol(sm)" (change)
+fields::image.plot(1:ncol(smWaves),1:ncol(smWaves),smWaves,col=hcl.colors(n, palette="viridis"),xlab="",ylab="",main="(b) Wave Synchrony",cex.lab=1.5, cex.axis=1.5, cex.sub=1.5)
 # colorful matrix of smNO3
-fields::image.plot(1:ncol(smNO3),1:ncol(smNO3),smNO3,col=heat.colors(20),xlab="Sites",ylab="Sites",cex.lab=1.5, cex.axis=1.5, cex.sub=1.5) # axes say "1:ncol(sm)" (change)
+fields::image.plot(1:ncol(smNO3),1:ncol(smNO3),smNO3,col=hcl.colors(n, palette="viridis"),xlab="",ylab="",main="(c) Nitrate Synchrony",cex.lab=1.5, cex.axis=1.5, cex.sub=1.5)
 # colorful matrix of newDistMat
-fields::image.plot(1:ncol(newDistMat),1:ncol(newDistMat),newDistMat,col=heat.colors(20),xlab="Sites",ylab="Sites",cex.lab=1.5, cex.axis=1.5, cex.sub=1.5)
+fields::image.plot(1:ncol(newDistMat),1:ncol(newDistMat),newDistMat,col=hcl.colors(n, palette="viridis"),xlab="",ylab="",main="(d) Distance (km)",cex.lab=1.5, cex.axis=1.5, cex.sub=1.5)
 # colorful matrix of transport - log logSymProbMat
 diag(logSymProbMat) <- 0
-fields::image.plot(1:ncol(logSymProbMat),1:ncol(logSymProbMat),logSymProbMat,col=heat.colors(20),xlab="Sites",ylab="Sites",cex.lab=1.5, cex.axis=1.5, cex.sub=1.5)
+fields::image.plot(1:ncol(logSymProbMat),1:ncol(logSymProbMat),logSymProbMat,col=hcl.colors(n, palette="viridis"),xlab="",ylab="",main="(e) Log(Transport Index)",cex.lab=1.5, cex.axis=1.5, cex.sub=1.5)
 # colorful matrix of connectivity - log logSym
-fields::image.plot(1:ncol(logSym),1:ncol(logSym),logSym,col=heat.colors(20),xlab="Sites",ylab="Sites",cex.lab=1.5, cex.axis=1.5, cex.sub=1.5)
+fields::image.plot(1:ncol(logSym),1:ncol(logSym),logSym,col=hcl.colors(n, palette="viridis"),xlab="",ylab="",main="(f) Log(Connectivity Index)",cex.lab=1.5, cex.axis=1.5, cex.sub=1.5)
+mtext(outer=TRUE, "Site Index", side=1)
+mtext(outer=TRUE, "Site Index", side=2)
+dev.off()
 
 
 save.image(file = paste0(resloc, "final_figures.RData"))

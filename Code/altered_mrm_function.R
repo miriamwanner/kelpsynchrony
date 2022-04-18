@@ -7,7 +7,7 @@ my_mrm <- function (formula = formula(data), data, nperm = 1000, method = "linea
   m2 <- match(c("formula", "data"), names(m), nomatch = 0)
   m <- m[c(1, m2)]
   m[[1]] <- as.name("model.frame")
-  m <- eval(m, parent.frame())
+  m <- eval(m, parent.frame()) # incorrect number of dimensions error
   m <- as.matrix(m)
   n <- (1 + sqrt(1 + 8 * nrow(m)))/2
   if (abs(n - round(n)) > 1e-07) 

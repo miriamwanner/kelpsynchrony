@@ -27,7 +27,7 @@ library(rgl)
 library(gtools)
 library(ncf)
 library(ggplot2)
-library(mms)
+# library(mms)
 
 
 # PREPARING KELP DATA:
@@ -182,6 +182,11 @@ OD.avg.funct <- function(ocean.dist.monthly, t.min, t.max, t.range, semester){
   diag(OD.avg) <- 0
   return(list(OD.avg))
 }
+
+OceanDistanceMatrices <- readMat(con=paste0(datloc, "OceanDistanceMatrices.mat"))
+site_centers <- readMat(con=paste0(datloc, "site_centers.mat"))
+ocean.dist.monthly <- OceanDistanceMatrices$oceandist.monthly
+ocean.dist.yearly <- OceanDistanceMatrices$oceandist.yearly
 
 OD.avgs.mats <- lapply(t.range, function(semester){
   OD.avg.funct(ocean.dist.monthly=ocean.dist.monthly, 

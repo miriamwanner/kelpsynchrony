@@ -3,6 +3,8 @@
 
 rm(list=ls())
 
+setwd("/Users/miriam/Documents/Github/kelpsynchrony/Code/") # needs to be changed
+
 # get the ROMS cells corresponding to the kelp data
 source("get_ROMS_from_kelp.R")
 source("create_synchrony_matrices.R")

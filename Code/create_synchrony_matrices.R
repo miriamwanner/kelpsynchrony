@@ -11,9 +11,11 @@ if (!dir.exists(resloc)){
 datloc <- "../Data/"
 load(file=paste0(resloc, "get_ROMS.RData"))
 
+survival_rate <- 0.1
 
 library(spatstat)
 library(geosphere)
+library(spam)
 library(wsyn)
 library(ecodist)
 library(R.matlab)
@@ -28,7 +30,7 @@ library(rgl)
 library(gtools)
 library(ncf)
 library(ggplot2)
-library(mms)
+# library(mms)
 
 
 
@@ -54,7 +56,7 @@ for(i in 1:nrow(kelpDataROMSSites)){
 kelpFecundity <- 1463 * (rowSums(sqrtKelp) / ncol(sqrtKelp))
 
 # create a probability matrix and probability matrix multiplied by fecundity
-probMat <- (0.1)^oceanAvgKelpSites
+probMat <- (survival_rate)^oceanAvgKelpSites
 diag(probMat) <- 0
 # multiply each element of the probability matrix by the fecundity of each donor patch
 # (similar to formula 1 in table of paper)

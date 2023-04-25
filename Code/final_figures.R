@@ -27,7 +27,6 @@ library(scatterplot3d)
 library(rgl)
 library(gtools)
 library(ncf)
-library(ggplot2)
 # library(mms)
 
 library(dplyr)
@@ -76,6 +75,41 @@ MRM(as.dist(logit_sm) ~ as.dist(logSym) + as.dist(newDistMat) + as.dist(smWaves)
 # connectivity, log, not logit
 MRM(as.dist(sm) ~ as.dist(logSym) + as.dist(newDistMat) + as.dist(smWaves) + as.dist(smNO3))
 
+
+# transport, linear, logit
+t_lin_logit <- my_mrm(as.dist(logit_sm) ~ as.dist(symProbMat) + as.dist(newDistMat) + as.dist(smWaves) + as.dist(smNO3))
+# transport, linear, not logit
+t_lin_nlogit <- my_mrm(as.dist(sm) ~ as.dist(symProbMat) + as.dist(newDistMat) + as.dist(smWaves) + as.dist(smNO3))
+# transport, log, logit
+t_log_logit <- my_mrm(as.dist(logit_sm) ~ as.dist(logSymProbMat) + as.dist(newDistMat) + as.dist(smWaves) + as.dist(smNO3))
+# transport, log, not logit
+t_log_nlogit <- my_mrm(as.dist(sm) ~ as.dist(logSymProbMat) + as.dist(newDistMat) + as.dist(smWaves) + as.dist(smNO3))
+# connectivity, linear, logit
+c_lin_logit <- my_mrm(as.dist(logit_sm) ~ as.dist(symProbMatF) + as.dist(newDistMat) + as.dist(smWaves) + as.dist(smNO3))
+# connectivity, linear, not logit
+c_lin_nlogit <- my_mrm(as.dist(sm) ~ as.dist(symProbMatF) + as.dist(newDistMat) + as.dist(smWaves) + as.dist(smNO3))
+# connectivity, log, logit
+c_log_logit <- my_mrm(as.dist(logit_sm) ~ as.dist(logSym) + as.dist(newDistMat) + as.dist(smWaves) + as.dist(smNO3))
+# connectivity, log, not logit
+c_log_nlogit <- my_mrm(as.dist(sm) ~ as.dist(logSym) + as.dist(newDistMat) + as.dist(smWaves) + as.dist(smNO3))
+
+predictors <- c("dispersal", "distance", "waves", "nitrate")
+
+main_sr_0.5 <- data.frame(predictors,
+                         t_lin_logit$coef[7:10],
+                         t_lin_nlogit$coef[7:10],
+                         t_log_logit$coef[7:10],
+                         t_log_nlogit$coef[7:10],
+                         c_lin_logit$coef[7:10],
+                         c_lin_nlogit$coef[7:10],
+                         c_log_logit$coef[7:10],
+                         c_log_nlogit$coef[7:10])
+saveRDS(main_sr_0.5, file="main_sr_0.5.Rds")
+
+
+
+
+
 # ========================== Spline Correlogram ==========================
 
 
@@ -94,6 +128,36 @@ lines(smoothingSpline)
 dev.off()
 # points(spline_corr$real$predicted$x, spline_corr$real$predicted$y, pch=20, cex=0.2)
 # spline_corr$boot$boot.summary$predicted has different rows
+
+
+# spline_corr_dispersal <- my_sncf(symProbMatF, kelpDataROMSSites, latlon=TRUE)
+# connectivity_vec <- symProbMatF[upper.tri(symProbMatF, diag=FALSE)]
+# log_connectivity_vec <- logSym[upper.tri(logSym, diag=FALSE)]
+# smoothing_spline_dispersal = smooth.spline(spline_corr_dispersal$real$predicted$x, spline_corr_dispersal$real$predicted$y, spar=0.35)
+# # plotting
+# my_spline_plot(spline_corr_dispersal, ylim=c(-0.25, 1), cex.lab=1.5, cex.axis=1.5, cex.sub=1.5)
+# points(connectivity_vec, synch_vec, pch=20, cex=0.2, col="lightgrey")
+# lines(smoothing_spline_dispersal)
+
+connectivity_vec <- symProbMatF[upper.tri(symProbMatF, diag=FALSE)]
+log_connectivity_vec <- logSym[upper.tri(logSym, diag=FALSE)]
+plot(connectivity_vec, synch_vec, xlab="Connectivity", ylab="Synchrony", pch=20)
+plot(log_connectivity_vec, synch_vec, xlab="log(Connectivity)", ylab="Synchrony", pch=20)
+
+transport_vec <- symProbMat[upper.tri(symProbMat, diag=FALSE)]
+log_transport_vec <- logSymProbMat[upper.tri(logSymProbMat, diag=FALSE)]
+plot(transport_vec, synch_vec, xlab="Transport", ylab="Synchrony", pch=20)
+plot(log_transport_vec, synch_vec, xlab="log(Transport)", ylab="Synchrony", pch=20)
+
+waves_vec <- smWaves[upper.tri(smWaves, diag=FALSE)]
+plot(waves_vec, synch_vec, xlab="Waves", ylab="Synchrony", pch=20)
+
+no3_vec <- smNO3[upper.tri(smNO3, diag=FALSE)]
+plot(no3_vec, synch_vec, xlab="Nitrate", ylab="Synchrony", pch=20)
+
+dist_vec <- newDistMat[upper.tri(newDistMat, diag=FALSE)]
+plot(dist_vec, synch_vec, xlab="Distance", ylab="Synchrony", pch=20)
+
 
 # ========================== Clustering Map ==========================
 
@@ -171,21 +235,21 @@ southKelpAvgClean <- colMeans(southKelpDataROMSClean)
 x1 <- 1:length(northKelpAvgClean)
 pdf(file=paste0(resloc, "avgClustClean1.pdf"), width=6, height=3)
 plot(x1, northKelpAvgClean, xlim=range(x1), ylim=range(northKelpAvgClean), xlab="Time", ylab="Kelp Biomass",
-     main="Northerly Cluster", pch=16)
+     main="Northerly Cluster", pch=16, cex.lab=1.5, cex.main=1.8, cex.axis=1.8)
 lines(x1[order(x1)], northKelpAvgClean[order(x1)], xlim=range(x1), ylim=range(northKelpAvgClean), pch=16)
 dev.off()
 
 x2 <- 1:length(centralKelpAvgClean)
 pdf(file=paste0(resloc, "avgClustClean2.pdf"), width=6, height=3)
 plot(x2, centralKelpAvgClean, xlim=range(x2), ylim=range(centralKelpAvgClean), xlab="Time", ylab="Kelp Biomass",
-     main="Central Cluster", pch=16)
+     main="Central Cluster", pch=16, cex.lab=1.5, cex.main=1.8, cex.axis=1.8)
 lines(x2[order(x2)], centralKelpAvgClean[order(x2)], xlim=range(x2), ylim=range(centralKelpAvgClean), pch=16)
 dev.off()
 
 x3 <- 1:length(southKelpAvgClean)
 pdf(file=paste0(resloc, "avgClustClean3.pdf"), width=6, height=3)
 plot(x3, southKelpAvgClean, xlim=range(x3), ylim=range(southKelpAvgClean), xlab="Time", ylab="Kelp Biomass",
-     main="Southerly Cluster", pch=16)
+     main="Southerly Cluster", pch=16, cex.lab=1.5, cex.main=1.8, cex.axis=1.8)
 lines(x3[order(x3)], southKelpAvgClean[order(x3)], xlim=range(x3), ylim=range(southKelpAvgClean), pch=16)
 dev.off()
 

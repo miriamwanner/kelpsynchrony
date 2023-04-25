@@ -265,7 +265,6 @@ hist(as.vector(symProbMatF), main="Histogram of Connectivity (not log transforme
 
 
 
-# plotting synchrony adjusted for nitrate
 
 synch_vec <- sm[upper.tri(sm, diag=FALSE)]
 nitrate_vec <-smNO3[upper.tri(smNO3, diag=FALSE)]
@@ -273,51 +272,49 @@ transport_vec <- symProbMat[upper.tri(symProbMat, diag=FALSE)]
 connectivity_vec <- symProbMatF[upper.tri(symProbMatF, diag=FALSE)]
 waves_vec <- smWaves[upper.tri(smWaves, diag=FALSE)]
 dist_vec <- newDistMat[upper.tri(newDistMat, diag=FALSE)]
-
-predictors_df_transport <- data.frame(synch_vec, nitrate_vec, transport_vec, waves_vec, dist_vec)
-predictors_df_connectivity <- data.frame(synch_vec, nitrate_vec, connectivity_vec, waves_vec, dist_vec)
-
-linearModTransport <- lm(synch_vec ~ nitrate_vec + transport_vec + waves_vec + dist_vec, data=predictors_df_transport)
-linearModConnectivity <- lm(synch_vec ~ nitrate_vec + connectivity_vec + waves_vec + dist_vec, data=predictors_df_connectivity)
-
-modTransportCoefficients <- linearModTransport$coefficients
-modConnectivityCoefficients <- linearModConnectivity$coefficients
-
-
-synch_corrected_for_nitrate_transport <- synch_vec - (as.numeric(modTransportCoefficients['nitrate_vec']) * nitrate_vec) - 
-  (as.numeric(modTransportCoefficients['waves_vec']) * waves_vec) - (as.numeric(modTransportCoefficients['dist_vec']) * dist_vec)
-plot(transport_vec, synch_corrected_for_nitrate_transport, xlab="Transport", ylab="Synchrony corrected for nitrate, waves, distance")
-plot(log10(transport_vec), synch_corrected_for_nitrate_transport, xlab="Transport", ylab="Synchrony corrected for nitrate, waves, distance")
-
-
-synch_corrected_for_nitrate_connectivity <- synch_vec - (as.numeric(modConnectivityCoefficients['nitrate_vec']) * nitrate_vec) - 
-  (as.numeric(modTransportCoefficients['waves_vec']) * waves_vec) - (as.numeric(modTransportCoefficients['dist_vec']) * dist_vec)
-plot(connectivity_vec, synch_corrected_for_nitrate_connectivity, xlab="Connectivity", ylab="Synchrony corrected for nitrate, waves, distance")
-plot(log10(connectivity_vec), synch_corrected_for_nitrate_connectivity, xlab="Connectivity", ylab="Synchrony corrected for nitrate, waves, distance")
-
-
-
-# plotting synchrony adjusted for nitrate LOG transforms
-
 log_transport_vec <- logSymProbMat[upper.tri(logSymProbMat, diag=FALSE)]
 log_connectivity_vec <- logSym[upper.tri(logSym, diag=FALSE)]
 
+
+# putting it in a table of plots
+pdf(file=paste0(resloc, "corrected_plots_figure.pdf"), width=7, height=4.2)
+par(mfrow=c(2, 3), mai = c(0.4, 0.4, 0.4, 0.2), oma=c(1.5, 1.5, 0, 0))
+
+# transport adjusted for the other predictors
 predictors_df_log_transport <- data.frame(synch_vec, nitrate_vec, log_transport_vec, waves_vec, dist_vec)
-predictors_df_log_connectivity <- data.frame(synch_vec, nitrate_vec, log_connectivity_vec, waves_vec, dist_vec)
-
 linearModLogTransport <- lm(synch_vec ~ nitrate_vec + log_transport_vec + waves_vec + dist_vec, data=predictors_df_log_transport)
-linearModLogConnectivity <- lm(synch_vec ~ nitrate_vec + log_connectivity_vec + waves_vec + dist_vec, data=predictors_df_log_connectivity)
-
 modLogTransportCoefficients <- linearModLogTransport$coefficients
+synch_corrected_log_transport <- synch_vec - (as.numeric(modLogTransportCoefficients['nitrate_vec']) * nitrate_vec) - 
+  (as.numeric(modLogTransportCoefficients['waves_vec']) * waves_vec) - (as.numeric(modLogTransportCoefficients['dist_vec']) * dist_vec)
+plot(log_transport_vec, synch_corrected_log_transport, xlab="Log(Transport)", ylab="Synchrony corrected for nitrate, waves, distance", main="(a) Log(transport)", pch=20, cex=0.5)
+
+# connectivity adjusted for the other predictors
+predictors_df_log_connectivity <- data.frame(synch_vec, nitrate_vec, log_connectivity_vec, waves_vec, dist_vec)
+linearModLogConnectivity <- lm(synch_vec ~ nitrate_vec + log_connectivity_vec + waves_vec + dist_vec, data=predictors_df_log_connectivity)
 modLogConnectivityCoefficients <- linearModLogConnectivity$coefficients
+synch_corrected_log_connectivity <- synch_vec - (as.numeric(modLogConnectivityCoefficients['nitrate_vec']) * nitrate_vec) - 
+  (as.numeric(modLogConnectivityCoefficients['waves_vec']) * waves_vec) - (as.numeric(modLogConnectivityCoefficients['dist_vec']) * dist_vec)
+plot(log_connectivity_vec, synch_corrected_log_connectivity, xlab="Log(Connectivity)", ylab="Synchrony corrected for nitrate, waves, distance", main="(b) Log(connectivity)", pch=20, cex=0.5)
 
-synch_corrected_for_nitrate_log_transport <- synch_vec - (as.numeric(modTransportCoefficients['nitrate_vec']) * nitrate_vec) - 
-  (as.numeric(modTransportCoefficients['waves_vec']) * waves_vec) - (as.numeric(modTransportCoefficients['dist_vec']) * dist_vec)
-plot(log_transport_vec, synch_corrected_for_nitrate_log_transport, xlab="Log(Transport)", ylab="Synchrony corrected for nitrate, waves, distance")
+# nitrate adjusted for the other predictors
+synch_corrected_nitrate <- synch_vec - (as.numeric(modLogTransportCoefficients['log_transport_vec']) * log_transport_vec) - 
+  (as.numeric(modLogTransportCoefficients['waves_vec']) * waves_vec) - (as.numeric(modLogTransportCoefficients['dist_vec']) * dist_vec)
+plot(nitrate_vec, synch_corrected_nitrate, xlab="Nitrate", ylab="Synchrony corrected for log(transport), waves, distance", main="(c) Nitrate Synchrony", pch=20, cex=0.5)
 
-synch_corrected_for_nitrate_log_connectivity <- synch_vec - (as.numeric(modTransportCoefficients['nitrate_vec']) * nitrate_vec) - 
-  (as.numeric(modTransportCoefficients['waves_vec']) * waves_vec) - (as.numeric(modTransportCoefficients['dist_vec']) * dist_vec)
-plot(log_connectivity_vec, synch_corrected_for_nitrate_log_connectivity, xlab="Log(Connectivity)", ylab="Synchrony corrected for nitrate, waves, distance")
+# waves adjusted for the other predictors
+synch_corrected_waves <- synch_vec - (as.numeric(modLogTransportCoefficients['log_transport_vec']) * log_transport_vec) - 
+  (as.numeric(modLogTransportCoefficients['nitrate_vec']) * nitrate_vec) - (as.numeric(modLogTransportCoefficients['dist_vec']) * dist_vec)
+plot(waves_vec, synch_corrected_waves, xlab="Waves", ylab="Synchrony corrected for log(transport), nitrate, distance", main="(d) Waves Synchrony", pch=20, cex=0.5)
+
+# distance adjusted for the other predictors
+synch_corrected_dist <- synch_vec - (as.numeric(modLogTransportCoefficients['log_transport_vec']) * log_transport_vec) - 
+  (as.numeric(modLogTransportCoefficients['nitrate_vec']) * nitrate_vec) - (as.numeric(modLogTransportCoefficients['waves_vec']) * waves_vec)
+plot(dist_vec, synch_corrected_dist, xlab="Distance", ylab="Synchrony corrected for log(transport), nitrate, waves", main="(e) Distance", pch=20, cex=0.5)
+
+# putting it in a table of plots
+mtext(outer=TRUE, "Predictor", side=1)
+mtext(outer=TRUE, "Synchrony Corrected for Other Predictors", side=2)
+dev.off()
 
 
 save.image(file = paste0(resloc, "intermediate_figures.RData"))

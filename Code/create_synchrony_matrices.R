@@ -11,7 +11,7 @@ if (!dir.exists(resloc)){
 datloc <- "../Data/"
 load(file=paste0(resloc, "get_ROMS.RData"))
 
-survival_rate <- 0.1
+survival_rate <- 0.02
 
 library(spatstat)
 library(geosphere)

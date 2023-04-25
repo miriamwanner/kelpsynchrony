@@ -10,3 +10,4 @@ source("get_ROMS_from_kelp.R")
 source("create_synchrony_matrices.R")
 source("intermediate_figures.R") # includes possible figures for the appendix
 source("final_figures.R")
+source("new_data_processing.R")

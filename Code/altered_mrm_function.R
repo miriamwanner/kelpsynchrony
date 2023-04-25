@@ -28,7 +28,7 @@ my_mrm <- function (formula = formula(data), data, nperm = 1000, method = "linea
     Y <- m[, 1, drop = FALSE]
     nd <- nrow(X)
     XX <- crossprod(X)
-    XX <- solve(XX, tol=2.220446e-22)
+    XX <- solve(XX, tol=1e-29)
     XY <- crossprod(X, Y)
     YY <- crossprod(Y)
     b <- XX %*% XY

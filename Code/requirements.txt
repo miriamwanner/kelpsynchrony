@@ -1,0 +1,15 @@
+here
+ncdf4
+R.matlab
+geosphere
+plyr
+wsyn
+ncf
+hexbin
+ggplot2
+gtools
+ecodist
+PBSmapping
+rjson
+raptr
+ggsn
